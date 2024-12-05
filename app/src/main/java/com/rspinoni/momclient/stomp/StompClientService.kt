@@ -1,4 +1,4 @@
-package com.rspinoni.momclient
+package com.rspinoni.momclient.stomp
 
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope

@@ -13,8 +13,8 @@ import org.signal.libsignal.protocol.util.KeyHelper
 
 
 class Entity(preKeyId: Int, signedPreKeyId: Int, address: String?) {
-    private val store: SignalProtocolStore
-    private val preKey: PreKeyBundle
+    val store: SignalProtocolStore
+    val preKey: PreKeyBundle
     val address: SignalProtocolAddress = SignalProtocolAddress(address, 1)
     private var deviceId = 1
 
