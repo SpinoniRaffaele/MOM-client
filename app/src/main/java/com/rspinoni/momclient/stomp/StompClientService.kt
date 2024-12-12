@@ -19,11 +19,15 @@ class StompClientService(private val url: String, private val subscriptionPath: 
 
     fun connectAndSubscribe() {
         scope.launch {
-            session = stompClient.connect(url)
-            Log.i("Socket", "Connected")
-            val subscription: Flow<String> = session!!.subscribeText(subscriptionPath)
-            subscription.collect {
-                msg -> Log.i("Socket", "Received: $msg")
+            try {
+                session = stompClient.connect(url)
+                Log.i("Socket", "Connected")
+                val subscription: Flow<String> = session!!.subscribeText(subscriptionPath)
+                subscription.collect {
+                        msg -> Log.i("Socket", "Received: $msg")
+                }
+            } catch (e: Exception) {
+                Log.e("Socket", e.stackTraceToString())
             }
         }
     }
