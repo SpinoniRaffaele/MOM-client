@@ -1,7 +1,9 @@
 package com.rspinoni.momclient.rest
 
+import android.content.Context
 import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.rspinoni.momclient.MainActivity
 import com.rspinoni.momclient.model.UserWithPreKey
 import okhttp3.Call
 import okhttp3.Callback
@@ -13,7 +15,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 
-class RestClientService(private val httpServerUrl: String) {
+class RestClientService(private val httpServerUrl: String, private val context: MainActivity) {
 
     private val mediaType: MediaType = "application/json".toMediaType()
 
@@ -21,7 +23,7 @@ class RestClientService(private val httpServerUrl: String) {
 
     private val mapper: ObjectMapper = ObjectMapper()
 
-    fun register(user: UserWithPreKey) {
+    fun register(user: UserWithPreKey, onResponse: (response: Response)->Unit) {
         val request: Request = Request.Builder().url("$httpServerUrl/authorization/register")
             .post(mapper.writeValueAsString(user).toRequestBody(mediaType))
             .build()
@@ -31,6 +33,9 @@ class RestClientService(private val httpServerUrl: String) {
             }
             override fun onResponse(call: Call, response: Response) {
                 Log.i("HttpClient", response.toString())
+                context.runOnUiThread {
+                    onResponse.invoke(response)
+                }
             }
         })
     }
