@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">MOM-client</string>
+    <string name="element_text" >test</string>
+    <string name="new_chat_button">New chat</string>
 </resources>

@@ -1,6 +1,5 @@
 package com.rspinoni.momclient.rest
 
-import android.content.Context
 import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rspinoni.momclient.MainActivity

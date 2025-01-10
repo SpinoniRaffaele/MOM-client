@@ -1,10 +1,15 @@
 package com.rspinoni.momclient
 
 import android.os.Bundle
+import android.util.ArraySet
 import android.util.Log
 import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.rspinoni.momclient.adapters.ChatsListAdapter
+import com.rspinoni.momclient.model.DataStorePreferences
 import com.rspinoni.momclient.model.UserWithPreKey
 import com.rspinoni.momclient.rest.RestClientService
 import com.rspinoni.momclient.stomp.StompClientService
@@ -12,7 +17,6 @@ import com.rspinoni.momclient.storage.ClientDataStoreService
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -33,10 +37,13 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         scope.launch {
-            val number = clientDataStoreService.getRegisteredNumber()
-            if (number != null && number != "") {
+            val preferences = clientDataStoreService.getSavedPreferences()
+                ?: DataStorePreferences("", ArraySet())
+            val number = preferences.phoneNumber
+            if (number != "") {
                 setContentView(R.layout.activity_chats)
                 stompClientService.connectAndSubscribe()
+                initializeChatList(preferences.chats)
             } else {
                 setContentView(R.layout.activity_main)
             }
@@ -44,7 +51,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        //stompClientService.disconnect()
+        stompClientService.disconnect()
         //runBlocking { clientDataStoreService.clear() }
         super.onStop()
         scope.cancel()
@@ -61,5 +68,14 @@ class MainActivity : AppCompatActivity() {
         restClientService.register(UserWithPreKey(id, phoneNumberString, "DUMMY")) {
             setContentView(R.layout.activity_chats)
         }
+    }
+
+    private fun initializeChatList(chats: Set<String>) {
+        Log.i("ChatList", "initialization")
+        val customAdapter = ChatsListAdapter(chats.toTypedArray(), this)
+
+        val recyclerView: RecyclerView = findViewById(R.id.chat_recycler_view)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = customAdapter
     }
 }
