@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">MOM-client</string>
-    <string name="element_text" >test</string>
+    <string name="element_text">test</string>
     <string name="new_chat_button">New chat</string>
+    <string name="register">Register</string>
+    <string name="phone_number">Phone number</string>
+    <string name="add_chat_submit_button_text">Add Chat</string>
+    <string name="add_chat_number_hint">Phone number</string>
+    <string name="add_chat_name_hint">Unique username</string>
 </resources>

@@ -1,14 +1,19 @@
 package com.rspinoni.momclient
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.ArraySet
 import android.util.Log
 import android.view.View
 import android.widget.EditText
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rspinoni.momclient.adapters.ChatsListAdapter
+import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.DataStorePreferences
 import com.rspinoni.momclient.model.UserWithPreKey
 import com.rspinoni.momclient.rest.RestClientService
@@ -29,14 +34,27 @@ class MainActivity : AppCompatActivity() {
     private val restClientService: RestClientService = RestClientService(httpServerUrl, this)
     private val clientDataStoreService: ClientDataStoreService = ClientDataStoreService(this)
     private val scope = MainScope()
+    private val getNewChatInfo = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val intent: Intent? = result.data
+            val resultName: String? = intent?.getStringExtra(RESULT_NAME_KEY)
+            val resultNumber: String? = intent?.getStringExtra(RESULT_NUMBER_KEY)
+            if (resultName is String && resultNumber is String) {
+                Log.i("ActivityResult", "is string ok")
+                scope.launch {
+                    val updatedChats = clientDataStoreService.setNewChat(Chat(resultNumber, resultName))
+                    initializeChatList(updatedChats)
+                }
+            }
+            Log.i("ActivityResult", "$resultName - $resultNumber")
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-    }
-
-    override fun onStart() {
-        super.onStart()
         scope.launch {
+            Log.i("MainActivity", "onStart")
             val preferences = clientDataStoreService.getSavedPreferences()
                 ?: DataStorePreferences("", ArraySet())
             val number = preferences.phoneNumber
@@ -50,11 +68,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStop() {
-        stompClientService.disconnect()
-        //runBlocking { clientDataStoreService.clear() }
-        super.onStop()
+    override fun onStart() {
+        super.onStart()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         scope.cancel()
+        stompClientService.disconnect()
     }
 
     fun subscribeHandler(v: View) {
@@ -70,7 +91,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun initializeChatList(chats: Set<String>) {
+    fun newChatHandler(v: View) {
+        getNewChatInfo.launch(Intent(this, NewChatActivity::class.java))
+    }
+
+    private fun initializeChatList(chats: Set<Chat>) {
         Log.i("ChatList", "initialization")
         val customAdapter = ChatsListAdapter(chats.toTypedArray(), this)
 

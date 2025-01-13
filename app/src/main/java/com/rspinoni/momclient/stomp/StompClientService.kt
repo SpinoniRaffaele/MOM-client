@@ -34,7 +34,7 @@ class StompClientService(private val url: String, private val subscriptionPath: 
 
     fun disconnect() {
         runBlocking {
-            session!!.disconnect()
+            session?.disconnect()
             Log.i("Socket", "Disconnected")
         }
         scope.cancel()

@@ -7,8 +7,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.rspinoni.momclient.R
+import com.rspinoni.momclient.model.Chat
 
-class ChatsListAdapter(private val dataSet: Array<String>, private val context: Context) :
+class ChatsListAdapter(private val dataSet: Array<Chat>, private val context: Context) :
     RecyclerView.Adapter<ChatsListAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -22,7 +23,7 @@ class ChatsListAdapter(private val dataSet: Array<String>, private val context: 
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        viewHolder.textView.text = dataSet[position]
+        viewHolder.textView.text = "${dataSet[position].name}   ${dataSet[position].phoneNumber}"
     }
 
     override fun getItemCount() = dataSet.size

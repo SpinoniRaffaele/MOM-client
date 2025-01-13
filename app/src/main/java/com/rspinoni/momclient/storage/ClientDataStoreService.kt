@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.DataStorePreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -21,13 +22,12 @@ class ClientDataStoreService(private val context: Context) {
     private val CHATS_KEY = stringSetPreferencesKey("chats")
 
     suspend fun getSavedPreferences(): DataStorePreferences? {
-        Log.i("Data", "Retrieving registered number")
         val preferencesFlow: Flow<DataStorePreferences> = context.dataStore.data.map { data: Preferences ->
-            DataStorePreferences(
+            DataStorePreferences.invoke(
                 data[REGISTERED_NUMBER_KEY] ?: "", data[CHATS_KEY] ?: ArraySet())
         }
         val preferences = preferencesFlow.firstOrNull()
-        Log.i("Data", "Retrieved preferences: ${preferences.toString()}")
+        Log.i("Data", "Retrieved preferences: ${preferences?.phoneNumber}")
         return preferences
     }
 
@@ -36,6 +36,16 @@ class ClientDataStoreService(private val context: Context) {
             data[REGISTERED_NUMBER_KEY] = registeredNumber
         }
         Log.i("Data", "Saved registered number $registeredNumber")
+    }
+
+    suspend fun setNewChat(chat: Chat): Set<Chat> {
+        val serializedChat: String = DataStorePreferences.serializeChat(chat)
+        var result: Set<Chat> = ArraySet()
+        context.dataStore.edit {data ->
+            data[CHATS_KEY] = (data[CHATS_KEY] ?: ArraySet()).plus(serializedChat)
+            result = DataStorePreferences.deserializeChats(data[CHATS_KEY] ?: ArraySet())
+        }
+        return result
     }
 
     suspend fun clear() {
