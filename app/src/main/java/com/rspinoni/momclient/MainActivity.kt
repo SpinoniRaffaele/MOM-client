@@ -7,6 +7,7 @@ import android.util.ArraySet
 import android.util.Log
 import android.view.View
 import android.widget.EditText
+import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -26,7 +27,7 @@ import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
     //to find the localhost IP use `ipconfig` and check the IPv4 of the connection you have
-    private val domain: String = "192.168.43.206:8080"
+    private val domain: String = "172.29.64.1:8080"
     private val httpServerUrl: String = "http://$domain"
     private val websocketUrl: String = "ws://$domain/websocket"
     private val subscriptionPath: String = "/topic/notifications"
@@ -59,11 +60,11 @@ class MainActivity : AppCompatActivity() {
                 ?: DataStorePreferences("", ArraySet())
             val number = preferences.phoneNumber
             if (number != "") {
-                setContentView(R.layout.activity_chats)
+                setContentView(R.layout.activity_main_chats)
                 stompClientService.connectAndSubscribe()
                 initializeChatList(preferences.chats)
             } else {
-                setContentView(R.layout.activity_main)
+                setContentView(R.layout.activity_main_register)
             }
         }
     }
@@ -82,17 +83,24 @@ class MainActivity : AppCompatActivity() {
         val phoneNumber: EditText = findViewById(R.id.editTextPhone)
         val phoneNumberString: String = phoneNumber.text.toString()
         val id = UUID.randomUUID().toString()
-        scope.launch {
-            clientDataStoreService.setRegisteredNumber(phoneNumberString)
-        }
         Log.i("Subscribe", "Subscribe $phoneNumberString, id: $id")
         restClientService.register(UserWithPreKey(id, phoneNumberString, "DUMMY")) {
-            setContentView(R.layout.activity_chats)
+            setContentView(R.layout.activity_main_chats)
+            scope.launch {
+                clientDataStoreService.setRegisteredNumber(phoneNumberString)
+            }
         }
     }
 
     fun newChatHandler(v: View) {
         getNewChatInfo.launch(Intent(this, NewChatActivity::class.java))
+    }
+
+    fun deleteStorageHandler(v: View) {
+        scope.launch {
+            clientDataStoreService.clear()
+            Toast.makeText(baseContext, "Storage cleaned", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun initializeChatList(chats: Set<Chat>) {

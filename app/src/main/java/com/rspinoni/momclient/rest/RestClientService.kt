@@ -1,6 +1,7 @@
 package com.rspinoni.momclient.rest
 
 import android.util.Log
+import android.widget.Toast
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rspinoni.momclient.MainActivity
 import com.rspinoni.momclient.model.UserWithPreKey
@@ -29,6 +30,10 @@ class RestClientService(private val httpServerUrl: String, private val context: 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e("HttpClient", e.stackTraceToString())
+                context.runOnUiThread {
+                    Toast.makeText(context, "Error communicating with the server",
+                        Toast.LENGTH_SHORT).show()
+                }
             }
             override fun onResponse(call: Call, response: Response) {
                 Log.i("HttpClient", response.toString())
