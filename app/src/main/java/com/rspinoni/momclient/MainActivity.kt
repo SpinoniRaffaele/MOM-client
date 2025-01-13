@@ -7,6 +7,7 @@ import android.util.ArraySet
 import android.util.Log
 import android.view.View
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+const val BUNDLE_NAME_KEY: String = "name_"
+const val BUNDLE_NUMBER_KEY: String = "number_"
+
 class MainActivity : AppCompatActivity() {
     //to find the localhost IP use `ipconfig` and check the IPv4 of the connection you have
     private val domain: String = "172.29.64.1:8080"
@@ -39,8 +43,8 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
             val intent: Intent? = result.data
-            val resultName: String? = intent?.getStringExtra(RESULT_NAME_KEY)
-            val resultNumber: String? = intent?.getStringExtra(RESULT_NUMBER_KEY)
+            val resultName: String? = intent?.getStringExtra(BUNDLE_NAME_KEY)
+            val resultNumber: String? = intent?.getStringExtra(BUNDLE_NUMBER_KEY)
             if (resultName is String && resultNumber is String) {
                 Log.i("ActivityResult", "is string ok")
                 scope.launch {
@@ -84,11 +88,13 @@ class MainActivity : AppCompatActivity() {
         val phoneNumberString: String = phoneNumber.text.toString()
         val id = UUID.randomUUID().toString()
         Log.i("Subscribe", "Subscribe $phoneNumberString, id: $id")
-        restClientService.register(UserWithPreKey(id, phoneNumberString, "DUMMY")) {
-            setContentView(R.layout.activity_main_chats)
-            scope.launch {
-                clientDataStoreService.setRegisteredNumber(phoneNumberString)
-            }
+        restClientService.register(
+            UserWithPreKey(id, phoneNumberString, "DUMMY"), {
+                setContentView(R.layout.activity_main_chats)
+                scope.launch { clientDataStoreService.setRegisteredNumber(phoneNumberString) }
+            }) {
+            Toast.makeText(
+                this, "Error communicating with the server", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -101,6 +107,17 @@ class MainActivity : AppCompatActivity() {
             clientDataStoreService.clear()
             Toast.makeText(baseContext, "Storage cleaned", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun openChatHandler(v: View) {
+        val openingChat = Chat(
+            v.findViewById<TextView>(R.id.chat_item_text_number).text.toString(),
+            v.findViewById<TextView>(R.id.chat_item_text_name).text.toString()
+        )
+        val data = Intent(this, ChatActivity::class.java)
+        data.putExtra(BUNDLE_NAME_KEY, openingChat.name)
+        data.putExtra(BUNDLE_NUMBER_KEY, openingChat.phoneNumber)
+        startActivity(data)
     }
 
     private fun initializeChatList(chats: Set<Chat>) {

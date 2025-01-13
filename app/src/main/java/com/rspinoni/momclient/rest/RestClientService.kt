@@ -23,23 +23,19 @@ class RestClientService(private val httpServerUrl: String, private val context: 
 
     private val mapper: ObjectMapper = ObjectMapper()
 
-    fun register(user: UserWithPreKey, onResponse: (response: Response)->Unit) {
+    fun register(user: UserWithPreKey, onResponse: (response: Response)->Unit = {},
+                 onFailure: (e: Exception)->Unit = {}) {
         val request: Request = Request.Builder().url("$httpServerUrl/authorization/register")
             .post(mapper.writeValueAsString(user).toRequestBody(mediaType))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e("HttpClient", e.stackTraceToString())
-                context.runOnUiThread {
-                    Toast.makeText(context, "Error communicating with the server",
-                        Toast.LENGTH_SHORT).show()
-                }
+                context.runOnUiThread { onFailure.invoke(e) }
             }
             override fun onResponse(call: Call, response: Response) {
                 Log.i("HttpClient", response.toString())
-                context.runOnUiThread {
-                    onResponse.invoke(response)
-                }
+                context.runOnUiThread { onResponse.invoke(response) }
             }
         })
     }
