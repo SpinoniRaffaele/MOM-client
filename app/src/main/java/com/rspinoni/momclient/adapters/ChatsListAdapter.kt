@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.rspinoni.momclient.R
 import com.rspinoni.momclient.model.Chat
+import java.util.Locale
 
 class ChatsListAdapter(private val dataSet: Array<Chat>, private val context: Context) :
     RecyclerView.Adapter<ChatsListAdapter.ViewHolder>() {
@@ -28,8 +29,12 @@ class ChatsListAdapter(private val dataSet: Array<Chat>, private val context: Co
             .findViewById(R.id.chat_item_text_name)
         val numberTextView: TextView = viewHolder.containerView
             .findViewById(R.id.chat_item_text_number)
+        val unreadMessage: TextView = viewHolder.containerView
+            .findViewById(R.id.chat_item_unread_messages_number)
         nameTextView.text = dataSet[position].name
         numberTextView.text = dataSet[position].phoneNumber
+        unreadMessage.text = String.format(
+            Locale.getDefault(), "%d", dataSet[position].unreadMessages)
     }
 
     override fun getItemCount() = dataSet.size

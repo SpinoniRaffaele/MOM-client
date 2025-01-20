@@ -2,13 +2,13 @@ package com.rspinoni.momclient.model
 
 import java.util.stream.Collectors
 
-class DataStorePreferences(var phoneNumber: String, var chats: Set<Chat>) {
+class DataStorePreferences(var phoneNumber: String, var deviceId: String, var chats: Set<Chat>) {
 
     companion object {
         private val CHAT_SEPARATOR = "_%&*&%_"
 
-        operator fun invoke(phoneNumber: String, chats: Set<String>) =
-            DataStorePreferences(phoneNumber, deserializeChats(chats))
+        operator fun invoke(phoneNumber: String, deviceId: String, chats: Set<String>) =
+            DataStorePreferences(phoneNumber, deviceId, deserializeChats(chats))
 
         fun deserializeChats(chats: Set<String>): Set<Chat> {
             return chats.stream()

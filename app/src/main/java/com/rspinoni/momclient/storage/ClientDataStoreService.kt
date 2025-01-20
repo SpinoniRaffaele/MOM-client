@@ -19,12 +19,16 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 class ClientDataStoreService(private val context: Context) {
     private val REGISTERED_NUMBER_KEY = stringPreferencesKey("registered-number")
+    private val DEVICE_ID_KEY = stringPreferencesKey("device-id")
     private val CHATS_KEY = stringSetPreferencesKey("chats")
 
     suspend fun getSavedPreferences(): DataStorePreferences? {
         val preferencesFlow: Flow<DataStorePreferences> = context.dataStore.data.map { data: Preferences ->
             DataStorePreferences.invoke(
-                data[REGISTERED_NUMBER_KEY] ?: "", data[CHATS_KEY] ?: ArraySet())
+                data[REGISTERED_NUMBER_KEY] ?: "",
+                data[DEVICE_ID_KEY] ?: "",
+                data[CHATS_KEY] ?: ArraySet()
+            )
         }
         val preferences = preferencesFlow.firstOrNull()
         Log.i("Data", "Retrieved preferences: ${preferences?.phoneNumber}")
@@ -36,6 +40,13 @@ class ClientDataStoreService(private val context: Context) {
             data[REGISTERED_NUMBER_KEY] = registeredNumber
         }
         Log.i("Data", "Saved registered number $registeredNumber")
+    }
+
+    suspend fun setDeviceId(deviceId: String) {
+        context.dataStore.edit { data ->
+            data[DEVICE_ID_KEY] = deviceId
+        }
+        Log.i("Data", "Saved device id $deviceId")
     }
 
     suspend fun setNewChat(chat: Chat): Set<Chat> {

@@ -17,6 +17,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.rspinoni.momclient.adapters.ChatsListAdapter
 import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.DataStorePreferences
+import com.rspinoni.momclient.model.Message
+import com.rspinoni.momclient.model.User
 import com.rspinoni.momclient.model.UserWithPreKey
 import com.rspinoni.momclient.rest.RestClientService
 import com.rspinoni.momclient.stomp.StompClientService
@@ -24,6 +26,7 @@ import com.rspinoni.momclient.storage.ClientDataStoreService
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.ArrayList
 import java.util.UUID
 
 const val BUNDLE_NAME_KEY: String = "name_"
@@ -31,7 +34,7 @@ const val BUNDLE_NUMBER_KEY: String = "number_"
 
 class MainActivity : AppCompatActivity() {
     //to find the localhost IP use `ipconfig` and check the IPv4 of the connection you have
-    private val domain: String = "172.29.64.1:8080"
+    private val domain: String = "192.168.241.206:8080"
     private val httpServerUrl: String = "http://$domain"
     private val websocketUrl: String = "ws://$domain/websocket"
     private val subscriptionPath: String = "/topic/notifications"
@@ -60,21 +63,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         scope.launch {
             Log.i("MainActivity", "onStart")
-            val preferences = clientDataStoreService.getSavedPreferences()
-                ?: DataStorePreferences("", ArraySet())
+            val preferences = clientDataStoreService.getSavedPreferences()!!
             val number = preferences.phoneNumber
             if (number != "") {
-                setContentView(R.layout.activity_main_chats)
-                stompClientService.connectAndSubscribe()
-                initializeChatList(preferences.chats)
+                initRegisteredUserChatList(preferences)
             } else {
                 setContentView(R.layout.activity_main_register)
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
     }
 
     override fun onDestroy() {
@@ -83,15 +79,36 @@ class MainActivity : AppCompatActivity() {
         stompClientService.disconnect()
     }
 
+    private fun initRegisteredUserChatList(preferences: DataStorePreferences) {
+        setContentView(R.layout.activity_main_chats)
+        //stompClientService.connectAndSubscribe()
+        restClientService.connect(User(preferences.deviceId, preferences.phoneNumber),
+            { unreadMessages: List<Message> -> run {
+                //todo: store locally the unread messages
+                val chatList: MutableList<Chat> = ArrayList()
+                preferences.chats.forEach { chat: Chat ->
+                    val numOfUnreadMessages = unreadMessages.count { message ->
+                        message.sendersPhoneNumber == chat.phoneNumber
+                    }
+                    chatList.add(Chat(chat.phoneNumber, chat.name, numOfUnreadMessages))
+                }
+                initializeChatList(chatList.toSet())
+            }
+        })
+    }
+
     fun subscribeHandler(v: View) {
         val phoneNumber: EditText = findViewById(R.id.editTextPhone)
         val phoneNumberString: String = phoneNumber.text.toString()
         val id = UUID.randomUUID().toString()
         Log.i("Subscribe", "Subscribe $phoneNumberString, id: $id")
         restClientService.register(
-            UserWithPreKey(id, phoneNumberString, "DUMMY"), {
-                setContentView(R.layout.activity_main_chats)
-                scope.launch { clientDataStoreService.setRegisteredNumber(phoneNumberString) }
+            UserWithPreKey("DUMMY", id, phoneNumberString), {
+                scope.launch {
+                    clientDataStoreService.setRegisteredNumber(phoneNumberString)
+                    clientDataStoreService.setDeviceId(id)
+                }
+                initRegisteredUserChatList(DataStorePreferences(phoneNumberString, id, ArraySet()))
             }) {
             Toast.makeText(
                 this, "Error communicating with the server", Toast.LENGTH_SHORT).show()
