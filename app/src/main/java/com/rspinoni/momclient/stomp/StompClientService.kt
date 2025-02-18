@@ -1,6 +1,10 @@
 package com.rspinoni.momclient.stomp
 
 import android.util.Log
+import com.rspinoni.momclient.di.SUBSCRIPTION_PATH
+import com.rspinoni.momclient.di.WEBSOCKET_URL
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -12,7 +16,8 @@ import org.hildan.krossbow.stomp.StompSession
 import org.hildan.krossbow.stomp.subscribeText
 import org.hildan.krossbow.websocket.okhttp.OkHttpWebSocketClient
 
-class StompClientService(private val url: String, private val subscriptionPath: String) {
+@Singleton
+class StompClientService @Inject constructor() {
     private val scope = CoroutineScope(MainScope().coroutineContext)
     private var session: StompSession? = null
     private val stompClient = StompClient(OkHttpWebSocketClient())
@@ -20,9 +25,9 @@ class StompClientService(private val url: String, private val subscriptionPath: 
     fun connectAndSubscribe() {
         scope.launch {
             try {
-                session = stompClient.connect(url)
+                session = stompClient.connect(WEBSOCKET_URL)
                 Log.i("Socket", "Connected")
-                val subscription: Flow<String> = session!!.subscribeText(subscriptionPath)
+                val subscription: Flow<String> = session!!.subscribeText(SUBSCRIPTION_PATH)
                 subscription.collect {
                         msg -> Log.i("Socket", "Received: $msg")
                 }

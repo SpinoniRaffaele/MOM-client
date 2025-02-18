@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.rspinoni.momclient.MainActivity
+import com.rspinoni.momclient.di.HTTP_SERVER_URL
 import com.rspinoni.momclient.model.Message
 import com.rspinoni.momclient.model.User
 import com.rspinoni.momclient.model.UserWithPreKey
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType
@@ -18,7 +21,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 
-class RestClientService(private val httpServerUrl: String, private val context: MainActivity) {
+@Singleton
+class RestClientService @Inject constructor() {
 
     private val mediaType: MediaType = "application/json".toMediaType()
 
@@ -26,11 +30,14 @@ class RestClientService(private val httpServerUrl: String, private val context: 
 
     private val mapper: ObjectMapper = jacksonObjectMapper()
 
+    lateinit var context: MainActivity
+
     fun register(
-            user: UserWithPreKey, onResponse: (response: Response) -> Unit = {},
-        onFailure: (e: Exception) -> Unit = {},
+            user: UserWithPreKey,
+            onResponse: (response: Response) -> Unit = {},
+            onFailure: (e: Exception) -> Unit = {},
     ) {
-        val request: Request = Request.Builder().url("$httpServerUrl/authorization/register")
+        val request: Request = Request.Builder().url("$HTTP_SERVER_URL/authorization/register")
             .post(mapper.writeValueAsString(user).toRequestBody(mediaType))
             .build()
         client.newCall(request).enqueue(object : Callback {
@@ -49,7 +56,7 @@ class RestClientService(private val httpServerUrl: String, private val context: 
         user: User, onResponse: (response: List<Message>) -> Unit = {},
         onFailure: (e: Exception) -> Unit = {},
     ) {
-        val request: Request = Request.Builder().url("$httpServerUrl/authorization/connect")
+        val request: Request = Request.Builder().url("$HTTP_SERVER_URL/authorization/connect")
             .post(mapper.writeValueAsString(user).toRequestBody(mediaType))
             .build()
         client.newCall(request).enqueue(object : Callback {

@@ -3,13 +3,20 @@ package com.rspinoni.momclient
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import com.rspinoni.momclient.di.BUNDLE_NAME_KEY
+import com.rspinoni.momclient.di.BUNDLE_NUMBER_KEY
+import com.rspinoni.momclient.di.DI
 import com.rspinoni.momclient.model.Chat
+import com.rspinoni.momclient.rest.RestClientService
+import jakarta.inject.Inject
 
 class ChatActivity : AppCompatActivity() {
+    @Inject lateinit var restClientService: RestClientService
 
     private lateinit var chat: Chat
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        DI.injectChatActivity(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
         val number = intent.getStringExtra(BUNDLE_NUMBER_KEY)

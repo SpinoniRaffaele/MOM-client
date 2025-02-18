@@ -6,6 +6,8 @@ import android.util.Log
 import android.view.View
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import com.rspinoni.momclient.di.BUNDLE_NAME_KEY
+import com.rspinoni.momclient.di.BUNDLE_NUMBER_KEY
 
 class NewChatActivity : AppCompatActivity() {
 

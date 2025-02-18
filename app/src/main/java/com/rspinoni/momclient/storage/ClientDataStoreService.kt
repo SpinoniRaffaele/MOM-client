@@ -11,16 +11,20 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.DataStorePreferences
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "mom-data")
 
-class ClientDataStoreService(private val context: Context) {
+@Singleton
+class ClientDataStoreService @Inject constructor() {
     private val REGISTERED_NUMBER_KEY = stringPreferencesKey("registered-number")
     private val DEVICE_ID_KEY = stringPreferencesKey("device-id")
     private val CHATS_KEY = stringSetPreferencesKey("chats")
+    lateinit var context: Context
 
     suspend fun getSavedPreferences(): DataStorePreferences? {
         val preferencesFlow: Flow<DataStorePreferences> = context.dataStore.data.map { data: Preferences ->

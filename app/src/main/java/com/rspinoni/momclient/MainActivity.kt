@@ -15,6 +15,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rspinoni.momclient.adapters.ChatsListAdapter
+import com.rspinoni.momclient.di.BUNDLE_NAME_KEY
+import com.rspinoni.momclient.di.BUNDLE_NUMBER_KEY
+import com.rspinoni.momclient.di.DI
 import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.DataStorePreferences
 import com.rspinoni.momclient.model.Message
@@ -23,24 +26,17 @@ import com.rspinoni.momclient.model.UserWithPreKey
 import com.rspinoni.momclient.rest.RestClientService
 import com.rspinoni.momclient.stomp.StompClientService
 import com.rspinoni.momclient.storage.ClientDataStoreService
+import jakarta.inject.Inject
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.ArrayList
 import java.util.UUID
 
-const val BUNDLE_NAME_KEY: String = "name_"
-const val BUNDLE_NUMBER_KEY: String = "number_"
+class MainActivity: AppCompatActivity() {
+    @Inject lateinit var stompClientService: StompClientService
+    @Inject lateinit var restClientService: RestClientService
+    @Inject lateinit var clientDataStoreService: ClientDataStoreService
 
-class MainActivity : AppCompatActivity() {
-    //to find the localhost IP use `ipconfig` and check the IPv4 of the connection you have
-    private val domain: String = "192.168.241.206:8080"
-    private val httpServerUrl: String = "http://$domain"
-    private val websocketUrl: String = "ws://$domain/websocket"
-    private val subscriptionPath: String = "/topic/notifications"
-    private val stompClientService: StompClientService = StompClientService(websocketUrl, subscriptionPath)
-    private val restClientService: RestClientService = RestClientService(httpServerUrl, this)
-    private val clientDataStoreService: ClientDataStoreService = ClientDataStoreService(this)
     private val scope = MainScope()
     private val getNewChatInfo = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -60,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        initializeServices()
         super.onCreate(savedInstanceState)
         scope.launch {
             Log.i("MainActivity", "onStart")
@@ -144,5 +141,11 @@ class MainActivity : AppCompatActivity() {
         val recyclerView: RecyclerView = findViewById(R.id.chat_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = customAdapter
+    }
+
+    private fun initializeServices() {
+        DI.injectMainActivity(this)
+        clientDataStoreService.context = this
+        restClientService.context = this
     }
 }
