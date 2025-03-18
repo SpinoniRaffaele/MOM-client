@@ -26,6 +26,7 @@ import com.rspinoni.momclient.model.UserWithPreKey
 import com.rspinoni.momclient.rest.RestClientService
 import com.rspinoni.momclient.stomp.StompClientService
 import com.rspinoni.momclient.storage.ClientDataStoreService
+import com.rspinoni.momclient.storage.UnreadMessagesService
 import jakarta.inject.Inject
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -36,6 +37,7 @@ class MainActivity: AppCompatActivity() {
     @Inject lateinit var stompClientService: StompClientService
     @Inject lateinit var restClientService: RestClientService
     @Inject lateinit var clientDataStoreService: ClientDataStoreService
+    @Inject lateinit var unreadMessagesService: UnreadMessagesService
 
     private val scope = MainScope()
     private val getNewChatInfo = registerForActivityResult(
@@ -81,7 +83,7 @@ class MainActivity: AppCompatActivity() {
         //stompClientService.connectAndSubscribe()
         restClientService.connect(User(preferences.deviceId, preferences.phoneNumber),
             { unreadMessages: List<Message> -> run {
-                //todo: store locally the unread messages
+                unreadMessagesService.setUnreadMessages(unreadMessages)
                 val chatList: MutableList<Chat> = ArrayList()
                 preferences.chats.forEach { chat: Chat ->
                     val numOfUnreadMessages = unreadMessages.count { message ->
