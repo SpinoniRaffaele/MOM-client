@@ -78,7 +78,7 @@ class MainActivity: AppCompatActivity() {
 
     private fun initRegisteredUserChatList(preferences: DataStorePreferences) {
         setContentView(R.layout.activity_main_chats)
-        //stompClientService.connectAndSubscribe()
+        stompClientService.connectAndSubscribe()
         restClientService.connect(User(preferences.deviceId, preferences.phoneNumber),
             { unreadMessages: List<Message> -> run {
                 unreadMessagesService.setUnreadMessages(unreadMessages)
@@ -105,11 +105,9 @@ class MainActivity: AppCompatActivity() {
                     clientDataStoreService.setDeviceId(response.deviceId)
                 }
                 initRegisteredUserChatList(
-                    DataStorePreferences(phoneNumberString, response.deviceId, ArraySet()))
-            }) {
-            Toast.makeText(
-                this, "Error communicating with the server", Toast.LENGTH_SHORT).show()
-        }
+                    DataStorePreferences(phoneNumberString, response.deviceId, ArraySet())
+                )
+            })
     }
 
     fun newChatHandler(v: View) {
