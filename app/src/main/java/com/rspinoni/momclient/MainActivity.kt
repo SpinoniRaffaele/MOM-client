@@ -22,7 +22,6 @@ import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.DataStorePreferences
 import com.rspinoni.momclient.model.Message
 import com.rspinoni.momclient.model.User
-import com.rspinoni.momclient.model.UserWithPreKey
 import com.rspinoni.momclient.rest.RestClientService
 import com.rspinoni.momclient.stomp.StompClientService
 import com.rspinoni.momclient.storage.ClientDataStoreService
@@ -31,7 +30,6 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class MainActivity: AppCompatActivity() {
     @Inject lateinit var stompClientService: StompClientService
@@ -99,15 +97,15 @@ class MainActivity: AppCompatActivity() {
     fun subscribeHandler(v: View) {
         val phoneNumber: EditText = findViewById(R.id.editTextPhone)
         val phoneNumberString: String = phoneNumber.text.toString()
-        val id = UUID.randomUUID().toString()
-        Log.i("Subscribe", "Subscribe $phoneNumberString, id: $id")
+        Log.i("Subscribe", "Subscribe $phoneNumberString")
         restClientService.register(
-            UserWithPreKey("DUMMY", id, phoneNumberString), {
+            User("DUMMY", phoneNumberString), { response: User ->
                 scope.launch {
                     clientDataStoreService.setRegisteredNumber(phoneNumberString)
-                    clientDataStoreService.setDeviceId(id)
+                    clientDataStoreService.setDeviceId(response.deviceId)
                 }
-                initRegisteredUserChatList(DataStorePreferences(phoneNumberString, id, ArraySet()))
+                initRegisteredUserChatList(
+                    DataStorePreferences(phoneNumberString, response.deviceId, ArraySet()))
             }) {
             Toast.makeText(
                 this, "Error communicating with the server", Toast.LENGTH_SHORT).show()

@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.DataStorePreferences
+import com.rspinoni.momclient.model.User
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,7 @@ class ClientDataStoreService @Inject constructor() {
     private val DEVICE_ID_KEY = stringPreferencesKey("device-id")
     private val CHATS_KEY = stringSetPreferencesKey("chats")
     lateinit var context: Context
+    private var savedCredentials: User? = null
 
     suspend fun getSavedPreferences(): DataStorePreferences? {
         val preferencesFlow: Flow<DataStorePreferences> = context.dataStore.data.map { data: Preferences ->
@@ -35,8 +37,13 @@ class ClientDataStoreService @Inject constructor() {
             )
         }
         val preferences = preferencesFlow.firstOrNull()
-        Log.i("Data", "Retrieved preferences: ${preferences?.phoneNumber}")
+        savedCredentials = User(preferences?.deviceId!!, preferences.phoneNumber)
+        Log.i("Data", "Retrieved preferences: ${preferences.phoneNumber}")
         return preferences
+    }
+
+    fun getSavedCredentials(): User {
+        return savedCredentials ?: throw Exception("Credentials not loaded yet!")
     }
 
     suspend fun setRegisteredNumber(registeredNumber: String) {

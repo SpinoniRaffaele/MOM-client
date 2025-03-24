@@ -12,12 +12,14 @@ import com.rspinoni.momclient.di.DI
 import com.rspinoni.momclient.model.Chat
 import com.rspinoni.momclient.model.Message
 import com.rspinoni.momclient.rest.RestClientService
+import com.rspinoni.momclient.storage.ClientDataStoreService
 import com.rspinoni.momclient.storage.UnreadMessagesService
 import jakarta.inject.Inject
 
 class ChatActivity : AppCompatActivity() {
     @Inject lateinit var restClientService: RestClientService
     @Inject lateinit var unreadMessagesService: UnreadMessagesService
+    @Inject lateinit var clientDataStoreService: ClientDataStoreService
     private lateinit var chat: Chat
     private lateinit var unreadMessages: List<Message>
 
@@ -37,7 +39,10 @@ class ChatActivity : AppCompatActivity() {
         unreadMessages = unreadMessagesService.getUnreadMessagesFromSender(chat.phoneNumber)
         initializeMessageList(unreadMessages)
 
-        //todo send an update to the server to remove the unreadMessages
+        //todo: store the messages locally before deleting them from the server? maybe
+        // temporarily skip the deletion for testing purposes
+//        restClientService.deleteMessagesFromSender(
+//            clientDataStoreService.getSavedCredentials(), chat.phoneNumber)
     }
 
     private fun initializeMessageList(messages: List<Message>) {

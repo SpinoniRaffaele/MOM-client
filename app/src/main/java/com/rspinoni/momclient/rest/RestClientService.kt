@@ -8,11 +8,11 @@ import com.rspinoni.momclient.MainActivity
 import com.rspinoni.momclient.di.HTTP_SERVER_URL
 import com.rspinoni.momclient.model.Message
 import com.rspinoni.momclient.model.User
-import com.rspinoni.momclient.model.UserWithPreKey
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.Headers
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -33,8 +33,8 @@ class RestClientService @Inject constructor() {
     lateinit var context: MainActivity
 
     fun register(
-            user: UserWithPreKey,
-            onResponse: (response: Response) -> Unit = {},
+            user: User,
+            onResponse: (response: User) -> Unit = {},
             onFailure: (e: Exception) -> Unit = {},
     ) {
         val request: Request = Request.Builder().url("$HTTP_SERVER_URL/authorization/register")
@@ -47,7 +47,10 @@ class RestClientService @Inject constructor() {
             }
             override fun onResponse(call: Call, response: Response) {
                 Log.i("HttpClient", response.toString())
-                context.runOnUiThread { onResponse.invoke(response) }
+                context.runOnUiThread {
+                    onResponse.invoke(
+                        mapper.readValue(response.body?.string() ?: "{}", User::class.java))
+                }
             }
         })
     }
@@ -68,6 +71,27 @@ class RestClientService @Inject constructor() {
                 Log.i("HttpClient", response.toString())
                 val messages: List<Message> = mapper.readValue(response.body?.string() ?: "[]")
                 context.runOnUiThread { onResponse.invoke(messages) }
+            }
+        })
+    }
+
+    fun deleteMessagesFromSender(user: User, senderPhoneNumber: String,
+                                 onResponse: () -> Unit = {},
+                                 onFailure: (e: Exception) -> Unit = {}) {
+        val request: Request = Request.Builder()
+            .url("$HTTP_SERVER_URL/messages/${senderPhoneNumber}").delete()
+            .headers(Headers.headersOf(
+                "deviceId", user.deviceId,
+                "phoneNumber", user.phoneNumber))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e("HttpClient", e.stackTraceToString())
+                context.runOnUiThread { onFailure.invoke(e) }
+            }
+            override fun onResponse(call: Call, response: Response) {
+                Log.i("HttpClient", response.toString())
+                context.runOnUiThread { onResponse.invoke() }
             }
         })
     }
